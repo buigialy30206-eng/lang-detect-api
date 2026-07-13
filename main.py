@@ -39,7 +39,7 @@ class DetectResult(BaseModel):
 async def health(): return {"status": "ok"}
 
 @app.get("/")
-async def root(): return {"service": "Language Detector API", "version": "1.0.0"}
+async def root(): return {"service": "Language Detector API", "version": "1.0.0", "related": ["Sentiment Analysis API"]}
 
 @app.get("/detect", response_model=DetectResult)
 async def detect_language(text: str = Query(..., description="Text to detect language of")):
