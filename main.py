@@ -4,31 +4,13 @@ Detect language from text. 55+ languages supported.
 Uses Google's language-detection library. Offline, free.
 """
 
-from fastapi import FastAPI, Depends, Query
+from fastapi import Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langdetect import detect, detect_langs
 
-import time as _t, threading as _th
-_rl_win, _rl_max, _rl_hits, _rl_lk = 60, 60, {}, _th.Lock()
-
-async def _rate_limit(request):
-    from fastapi import Request, HTTPException
-    ip = (request.headers.get('X-Forwarded-For','') or request.headers.get('X-Real-IP','') or (request.client.host if request.client else '127.0.0.1')).split(',')[0].strip()
-    now = _t.time()
-    with _rl_lk:
-        e = _rl_hits.get(ip)
-        if e:
-            if now - e['s'] > _rl_win: e['s'], e['c'] = now, 1
-            else:
-                e['c'] += 1
-                if e['c'] > _rl_max: raise HTTPException(429, 'Too many requests')
-        else: _rl_hits[ip] = {'s': now, 'c': 1}
-    return True
-
 app = FastAPI(title="Language Detector API", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-
 
 LANG_NAMES = {
     "en": "English", "zh-cn": "Chinese (Simplified)", "zh-tw": "Chinese (Traditional)",
@@ -47,21 +29,17 @@ LANG_NAMES = {
     "sq": "Albanian", "cy": "Welsh", "mk": "Macedonian", "is": "Icelandic",
 }
 
-
 class DetectResult(BaseModel):
     text: str
     language: str
     language_name: str
     confidence: float
 
-
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health(): return {"status": "ok"}
 
-
 @app.get("/")
 async def root(): return {"service": "Language Detector API", "version": "1.0.0"}
-
 
 @app.get("/detect", response_model=DetectResult)
 async def detect_language(text: str = Query(..., description="Text to detect language of")):
