@@ -4,7 +4,7 @@ Detect language from text. 55+ languages supported.
 Uses Google's language-detection library. Offline, free.
 """
 
-from fastapi import Query
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langdetect import detect, detect_langs
